@@ -1,78 +1,70 @@
-#include <Arduino.h>
+// определение режима соединения и подключение библиотеки RemoteXY 
+#define REMOTEXY_MODE__ESP8266WIFI_LIB_POINT
 #include <ESP8266WiFi.h>
-#include <WiFiClient.h>
-#include <ESP8266WebServer.h>
-#include <ESP8266mDNS.h>
-#include <OneWire.h>
-#include <DallasTemperature.h>
-OneWire oneWire(14);// D5 вход датчика 18b20
-DallasTemperature t(&oneWire);
-MDNSResponder mdns;
-const char* ssid = "Andi";
-const char* password = "11111118";
-ESP8266WebServer server(81);
- 
-int temper,reg_t=20,gis=1;
-String ind;
 
-void web(){
-String webPage = "<!DOCTYPE HTML><html>";
-       webPage += "<meta charset='utf-8'><meta name='viewport' content='width=480, user-scalable=no' />";
-       webPage += "<style>table {background-color:#F5F5F5;border-radius: 5px;}</style>";
-       webPage += "<TABLE align='center' width='450' BORDER='1' cellspacing='0' cellpadding='5'><td colspan='3' align='center'>";
-       webPage += "<h1>Терморегулятор 0...125 &#176;C</td><tr></h1>";
-       webPage += "<meta http-equiv='Refresh' content='10; URL=/obn' />"; // автоматическое обновление страницы каждые 10 секунд
-       webPage += "<td align='center'>Температура</td><td align='center'><a href=\"obn\"><button>Обновить</button></a></td><td align='center'>";
-       webPage += temper;
-       webPage += "<tr><td align='center'>Регулировка температуры</td><td align='center'><a href=\"reg+\"><button>+1&nbsp;&nbsp;</button>";
-       webPage += "</a><a href=\"reg-\"><button>-1&nbsp;&nbsp;</button></a><br><a href=\"reg+10\"><button>+10</button></a>";
-       webPage += "<a href=\"reg-10\"><button>-10</button></a></td><td align='center'>";
-       webPage += reg_t;
-       webPage += " &#176;C</td>";
-       webPage += "<tr><td colspan='3' align='center'>Нагрев: ";
-       webPage += ind;
-       webPage += "</td></html>"; 
- 
-  server.send(200, "text/html", webPage);delay(300);
-}
- 
-void setup(void){
- 
-  pinMode(2, OUTPUT);// D4 выход управления нагрузкой
-  t.begin();t.setResolution(10);//10 бит 
- 
-  delay(1000);
-  Serial.begin(115200);
-  WiFi.begin(ssid, password);
-  Serial.println("");
- 
-  while (WiFi.status() != WL_CONNECTED) {delay(500);Serial.print(".");}
-  Serial.println("");
-  Serial.print("Connected to ");  
-  Serial.println(ssid);
-  Serial.print("IP address: ");  
-  Serial.println(WiFi.localIP());
- 
-  if (mdns.begin("esp8266", WiFi.localIP())) {Serial.println("MDNS responder started");}
- 
-  server.on("/", [](){web();});
-  server.on("/obn", [](){web();});
-  server.on("/reg+", [](){reg_t++;web();});
-  server.on("/reg-", [](){reg_t--;web();});
-  server.on("/reg+10", [](){reg_t=reg_t+10;web();});
-  server.on("/reg-10", [](){reg_t=reg_t-10;web();});
- 
-  server.begin();
-  Serial.println("HTTP server started");
-}
- 
-void loop(void){
-  server.handleClient();
-  t.requestTemperatures();temper=t.getTempCByIndex(0);
-   if(reg_t<=0){reg_t=0;}if(reg_t>=125){reg_t=125;}
-   if(reg_t >= temper + gis){digitalWrite(2,HIGH);ind=" ВКЛ";}
-   if(reg_t <= temper - gis){digitalWrite(2,LOW);ind=" ВЫКЛ";}
-  Serial.println(reg_t);
-}
- 
+#include <RemoteXY.h>
 
+// настройки соединения 
+#define REMOTEXY_WIFI_SSID "RemoteXY"
+#define REMOTEXY_WIFI_PASSWORD "12345678"
+#define REMOTEXY_SERVER_PORT 6377
+
+
+// конфигурация интерфейса  
+#pragma pack(push, 1)
+uint8_t RemoteXY_CONF[] =
+  { 255,2,0,11,0,82,0,10,13,0,
+  129,0,4,2,65,6,17,208,162,208,
+  181,208,186,209,131,209,137,208,176,209,
+  143,32,209,130,208,181,208,188,208,191,
+  208,181,209,128,208,176,209,130,209,131,
+  209,128,208,176,0,2,0,39,46,22,
+  11,2,26,31,31,79,78,0,79,70,
+  70,0,4,128,3,26,93,8,2,26,
+  67,4,71,3,20,5,2,26,11 };
+  
+// структура определяет все переменные и события вашего интерфейса управления 
+struct {
+
+    // input variables
+  uint8_t switch_1; // =1 если переключатель включен и =0 если отключен 
+  int8_t slider_1; // =0..100 положение слайдера 
+
+    // output variables
+  char text_1[11];  // =строка UTF8 оканчивающаяся нулем 
+
+    // other variable
+  uint8_t connect_flag;  // =1 if wire connected, else =0 
+
+} RemoteXY;
+#pragma pack(pop)
+
+/////////////////////////////////////////////
+//           END RemoteXY include          //
+/////////////////////////////////////////////
+
+#define PIN_SWITCH_1 D1
+
+
+void setup() 
+{
+  RemoteXY_Init (); 
+  
+  pinMode (PIN_SWITCH_1, OUTPUT);
+  
+  // TODO you setup code
+  
+}
+
+void loop() 
+{ 
+  RemoteXY_Handler ();
+  
+  digitalWrite(PIN_SWITCH_1, (RemoteXY.switch_1==0)?LOW:HIGH);
+  
+  // TODO you loop code
+  // используйте структуру RemoteXY для передачи данных
+  // не используйте функцию delay() 
+
+
+}
