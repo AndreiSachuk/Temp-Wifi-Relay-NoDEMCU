@@ -1,13 +1,10 @@
 // определение режима соединения и подключение библиотеки RemoteXY 
-#define REMOTEXY_MODE__ESP8266WIFI_LIB_POINT
-#include <ESP8266WiFi.h>
+#define REMOTEXY_MODE__ESP32CORE_BLE
 
 #include <RemoteXY.h>
 
 // настройки соединения 
-#define REMOTEXY_WIFI_SSID "RemoteXY"
-#define REMOTEXY_WIFI_PASSWORD "12345678"
-#define REMOTEXY_SERVER_PORT 6377
+#define REMOTEXY_BLUETOOTH_NAME "RemoteXY"
 
 
 // конфигурация интерфейса  
@@ -43,7 +40,7 @@ struct {
 //           END RemoteXY include          //
 /////////////////////////////////////////////
 
-#define PIN_SWITCH_1 D1
+#define PIN_SWITCH_1 22
 
 
 void setup() 
