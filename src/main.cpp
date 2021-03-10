@@ -24,10 +24,12 @@
 
 #include <RemoteXY.h>
 #include <DallasTemperature.h>
+#include <string>
+#include <bits/basic_string.h>
 
 // настройки соединения 
 #define REMOTEXY_BLUETOOTH_NAME "RemoteXY"
-#define ONE_WIRE_BUS 36
+#define ONE_WIRE_BUS 23   //D23
 OneWire oneWire(ONE_WIRE_BUS);
 
 DallasTemperature sensor(&oneWire);
@@ -36,21 +38,44 @@ DallasTemperature sensor(&oneWire);
 // конфигурация интерфейса  
 #pragma pack(push, 1)
 uint8_t RemoteXY_CONF[] =
-  { 255,1,0,0,0,11,0,10,13,0,
-  4,128,26,25,40,8,2,26 };
+  { 255,22,0,22,0,5,1,10,13,0,
+  129,0,2,18,73,6,17,208,162,208,
+  181,208,188,208,191,208,181,209,128,208,
+  176,209,130,209,131,209,128,208,176,32,
+  208,178,208,186,208,187,209,142,209,135,
+  208,181,208,189,208,184,209,143,0,67,
+  4,67,1,20,9,2,26,11,7,36,
+  75,18,16,5,2,26,2,11,129,0,
+  2,29,73,6,17,208,162,208,181,208,
+  188,208,191,208,181,209,128,208,176,209,
+  130,209,131,209,128,208,176,32,208,178,
+  209,139,208,187,209,142,209,135,208,181,
+  208,189,208,184,209,143,0,7,36,77,
+  30,15,5,2,26,2,11,129,0,2,
+  48,78,6,17,208,162,208,181,208,186,
+  209,131,209,137,208,181,208,181,32,209,
+  129,208,190,209,129,209,130,208,190,209,
+  143,208,189,208,184,208,181,0,67,4,
+  68,46,30,9,2,26,11,129,0,2,
+  3,78,6,17,208,162,208,181,208,186,
+  209,131,209,137,208,176,209,143,32,209,
+  130,208,181,208,188,208,191,208,181,209,
+  128,208,176,209,130,209,131,209,128,208,
+  176,0,129,0,88,3,7,6,17,194,
+  176,208,161,0,129,0,91,18,7,6,
+  17,194,176,208,161,0,129,0,92,30,
+  7,6,17,194,176,208,161,0 };
   
 // структура определяет все переменные и события вашего интерфейса управления 
 struct {
-  int8_t slider_1; // =0..100 slider position 
+
     // input variables
-  uint8_t switch_1; // =1 если переключатель включен и =0 если отключен 
-  int8_t slider_on; // =0..100 положение слайдера 
-  int8_t slider_off; // =0..100 положение слайдера 
+  char edit_1[11];  // =строка UTF8 оканчивающаяся нулем  
+  char edit_2[11];  // =строка UTF8 оканчивающаяся нулем  
 
     // output variables
   char text_1[11];  // =строка UTF8 оканчивающаяся нулем 
-  char text_on[11];  // =строка UTF8 оканчивающаяся нулем 
-  char text_off[11];  // =строка UTF8 оканчивающаяся нулем 
+  char OUT[11];  // =строка UTF8 оканчивающаяся нулем 
 
     // other variable
   uint8_t connect_flag;  // =1 if wire connected, else =0 
@@ -62,11 +87,13 @@ struct {
 //           END RemoteXY include          //
 /////////////////////////////////////////////
 
-#define PIN_SWITCH_1 22
+#define PIN_SWITCH_1 5   //D5
 
 
 void setup() 
 {
+
+  
   RemoteXY_Init (); 
   
   pinMode (PIN_SWITCH_1, OUTPUT);
@@ -78,36 +105,40 @@ void setup()
   sensor.setResolution(12);
   // TODO you setup code
   
+  
 }
+int timer = 0;
+
 
 void loop() 
 {   
+  int value_On = atoi (RemoteXY.edit_1);
+  int value_Off = atoi (RemoteXY.edit_2);
   RemoteXY_Handler ();
-
-
-  // TODO you loop code
-  // используйте структуру RemoteXY для передачи данных
-  // не используйте функцию delay() 
   
-  if(timer < millis()){
-    timer = millis() + 200;
-    Serial.printf("%6d>", millis());
-    Serial.println(RemoteXY.to_string());
-    RemoteXY.slider_on = (millis() / 100) % 100;
+  // переменная для хранения температуры
+  float temperature;
+  
+  // отправляем запрос на измерение температуры
+  sensor.requestTemperatures();
+  
+  // считываем данные из регистра датчика
+  temperature = sensor.getTempCByIndex(0);
 
-    float temperature;
-    sensor.requestTemperatures();
-    temperature = sensor.getTempCByIndex(0);
+  itoa (temperature, RemoteXY.text_1, 10);
 
-    int setTempOn = RemoteXY.slider_on/100.0*30.0+10.0;
-    int setTempOff = RemoteXY.slider_off/100.0*30.0+10.0;
-    
-    itoa (setTempOn, RemoteXY.text_on, 10);
-    itoa (setTempOff, RemoteXY.text_off, 10);
-    itoa (temperature, RemoteXY.text_1, 10);
-
-    digitalWrite(PIN_SWITCH_1, (temperature>setTempOff)?LOW:HIGH);
-    digitalWrite(PIN_SWITCH_1, (temperature<setTempOn)?HIGH:LOW);
+  if (temperature>value_Off)
+  {
+    digitalWrite(PIN_SWITCH_1,LOW);
   }
   
+  if (temperature<value_On)
+  {
+    digitalWrite(PIN_SWITCH_1,HIGH);
+  }
+
+
+  if (PIN_SWITCH_1==LOW) strcpy (RemoteXY.OUT, "OFF"); 
+    else  strcpy (RemoteXY.OUT, "ON"); 
+
 }
