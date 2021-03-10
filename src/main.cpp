@@ -24,6 +24,8 @@
 
 #include <RemoteXY.h>
 #include <DallasTemperature.h>
+#include <string>
+#include <bits/basic_string.h>
 
 // настройки соединения 
 #define REMOTEXY_BLUETOOTH_NAME "RemoteXY"
@@ -75,6 +77,20 @@ struct {
 
     // other variable
   uint8_t connect_flag;  // =1 if wire connected, else =0 
+  
+  String to_string(){
+    String out;
+    out += "{\n";
+    out += String("switch_1: ")+String(switch_1)+String("\n");
+    out += String("slider_on: ")+String(slider_on)+String("\n");
+    out += String("slider_off: ")+String(slider_off)+String("\n");
+    out += String("text_1: ")+String(text_1)+String("\n");
+    out += String("text_on: ")+String(text_on)+String("\n");
+    out += String("text_off: ")+String(text_off)+String("\n");
+    out += String("connect_flag: ")+String(connect_flag)+String("\n");
+    out += "}\n";
+    return out;
+  }
 
 } RemoteXY;
 #pragma pack(pop)
@@ -88,6 +104,8 @@ struct {
 
 void setup() 
 {
+  Serial.begin(921600);
+  
   RemoteXY_Init (); 
   
   pinMode (PIN_SWITCH_1, OUTPUT);
@@ -99,21 +117,25 @@ void setup()
   sensor.setResolution(12);
   // TODO you setup code
   
+  
 }
+int timer = 0;
+
 
 void loop() 
-{   int setTempOn = RemoteXY.slider_on/100.0*30.0+10.0;
+{   
+  int setTempOn = RemoteXY.slider_on/100.0*30.0+10.0;
   int setTempOff = RemoteXY.slider_off/100.0*30.0+10.0;
-   itoa (setTempOn, RemoteXY.text_on, 10);
- itoa (setTempOff, RemoteXY.text_off, 10);
+  itoa (setTempOn, RemoteXY.text_on, 10);
+  itoa (setTempOff, RemoteXY.text_off, 10);
   RemoteXY_Handler ();
   
-
-
-// переменная для хранения температуры
+  // переменная для хранения температуры
   float temperature;
+  
   // отправляем запрос на измерение температуры
   sensor.requestTemperatures();
+  
   // считываем данные из регистра датчика
   temperature = sensor.getTempCByIndex(0);
 
@@ -126,6 +148,10 @@ void loop()
   // TODO you loop code
   // используйте структуру RemoteXY для передачи данных
   // не используйте функцию delay() 
-
-
+  
+  if(timer < millis()){
+    timer = millis() + 200;
+    Serial.printf("%6d>", millis());
+    Serial.println(RemoteXY.to_string());
+  }
 }
