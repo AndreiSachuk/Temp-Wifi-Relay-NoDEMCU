@@ -126,14 +126,15 @@ void loop()
   temperature = sensor.getTempCByIndex(0);
 
   itoa (temperature, RemoteXY.text_1, 10);
-
-  if (temperature>value_Off)
-  {
+  // TEMP:
+  //0 -----^-----------^----- ->t
+  //      V_ON       V_OFF
+  //  HIGH |           | LOW
+  if (temperature > value_Off) {
     digitalWrite(PIN_SWITCH_1,LOW);
   }
   
-  if (temperature<value_On)
-  {
+  if (temperature < value_On) {
     digitalWrite(PIN_SWITCH_1,HIGH);
   }
 
