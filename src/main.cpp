@@ -137,8 +137,8 @@ void loop()
     digitalWrite(PIN_SWITCH_1,HIGH);
   }
 
-
-  if (PIN_SWITCH_1==LOW) strcpy (RemoteXY.OUT, "OFF"); 
+  //read instead of compare
+  if (digitalRead(PIN_SWITCH_1)==LOW) strcpy (RemoteXY.OUT, "OFF"); 
     else  strcpy (RemoteXY.OUT, "ON"); 
 
 }
