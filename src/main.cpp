@@ -104,7 +104,7 @@ void setup()
   // устанавливаем разрешение датчика от 9 до 12 бит
   sensor.setResolution(12);
   // TODO you setup code
-  
+  Serial.begin(921600);
   
 }
 int timer = 0;
@@ -141,5 +141,4 @@ void loop()
   //read instead of compare
   if (digitalRead(PIN_SWITCH_1)==LOW) strcpy (RemoteXY.OUT, "OFF"); 
     else  strcpy (RemoteXY.OUT, "ON"); 
-
 }
